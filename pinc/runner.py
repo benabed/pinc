@@ -8,7 +8,7 @@ import subprocess as sbp
 import shlex
 import time,datetime
 import sys
-from tools import logger
+from .tools import logger
 
 def noprint(*args,**kargs):
   return
@@ -120,7 +120,7 @@ class runner:
     if self.rchild!=None:
       try:
         self.rchild.kill()
-      except OSError,e:
+      except OSError as e:
         self.logger("cannot kill",e)
     self.finish(-1)
 

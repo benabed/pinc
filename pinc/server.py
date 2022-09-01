@@ -5,11 +5,11 @@ import zmq
 import sys
 import time,datetime
 import subprocess as sbp
-import runner
+import pinc.runner as runner
 import os.path as osp
-import tools
+import pinc.tools as tools
 import json
-import action
+import pinc.action as action
 
 class pincError(Exception):
   def __init__(self,text,cause=None):
@@ -23,10 +23,11 @@ sts_idx = dict([(v,i) for i,v in enumerate(child_status)])
 def print_job_status(status,file=None):
   if file==None:
     file = sys.stdout
-  def order(lb1,lb2):
-    return cmp(status[lb1][1][0],status[lb2][1][0])
-  lbs = status.keys()
-  lbs.sort(order)
+  #def order(lb1,lb2):
+  #  return cmp(status[lb1][1][0],status[lb2][1][0])
+  #lbs = list(status.keys())
+  #lbs.sort(order)
+  lbs = sorted(status.keys(),key=lambda ss:status[ss][1][0])
   if lbs:
     col1 = max(8,max([len(lb) for lb in lbs]))+1
     cols = [max(8,max([len(status[lb][1][i]) for lb in lbs]))+1 for i in range(8)]
@@ -79,6 +80,7 @@ class chld(client):
     self.logfile = jbi.get_logfile()
     self.actionqueue = queue
     self.log = log
+    print(type(pubaddress), "ICICICICICCI")
     self.runnercmd = " ".join([sys.executable,runner.__file__,self.label,pubaddress,pulladdress,self.logfile,"runner"])
 
     self.set_status("0")
@@ -161,7 +163,7 @@ class chld(client):
   def run(self,no=None):
     try:
       self.rchild,self.submitid = self.jbi.release(self.runnercmd,self.submitid)
-    except Exception,e:
+    except Exception as e:
       self.set_status("F")
       return 
     self.timestamp()
@@ -220,7 +222,7 @@ class ertiam:
     if ctx==None:
       self.ctx=zmq.Context()
     self.subso = self.ctx.socket(zmq.SUB)
-    self.subso.setsockopt(zmq.SUBSCRIBE,"")
+    self.subso.setsockopt_string(zmq.SUBSCRIBE,"")
     self.pushso = self.ctx.socket(zmq.PUSH)
     self.subso.connect(subaddress)
     self.pushso.connect(pushaddress)
@@ -286,7 +288,7 @@ class ertiam:
       #print("2")
       self.communicate("disconnect")
       #print("3")
-    except Exception,e:
+    except Exception as e:
       #print("4")
       pass
     #print("5")
@@ -298,7 +300,7 @@ class server(ertiam):
     self.ctx = zmq.Context()
     self.slave = self.ctx.socket(zmq.PAIR)
     self.slave.bind("%s://%s"%(options["server_protocol"],options["server_address"]))
-    spath = self.slave.getsockopt(zmq.LAST_ENDPOINT)
+    spath = self.slave.getsockopt_string(zmq.LAST_ENDPOINT)
     self.serverpid = sbp.Popen([sys.executable,__file__.replace("workflow","server"),spath])
     self.slave.recv_pyobj()
     self.slave.send_pyobj(options)
@@ -354,22 +356,22 @@ class server_exec:
     #and open the pub and pull socket 
     self.pubso = self.context.socket(zmq.PUB)
     self.pubso.bind("%s://%s"%(self.options["child_protocol"],self.options["child_address"]))
-    self.log("open the pub/sub socket at '%s'"%self.pubso.getsockopt(zmq.LAST_ENDPOINT).strip())
+    self.log("open the pub/sub socket at '%s'"%self.pubso.getsockopt_string(zmq.LAST_ENDPOINT).strip())
     
     self.pullso = self.context.socket(zmq.PULL)
     self.pullso.bind("%s://%s"%(self.options["child_protocol"],self.options["child_address"]))
-    self.log("open the pull/push socket at '%s'"%self.pullso.getsockopt(zmq.LAST_ENDPOINT).strip())
+    self.log("open the pull/push socket at '%s'"%self.pullso.getsockopt_string(zmq.LAST_ENDPOINT).strip())
     
     # register the pull socket in the poller
     self.poller.register(self.pullso,zmq.POLLIN)
     
     #tell master about the pub and pull
-    self.pair_send((self.pubso.getsockopt(zmq.LAST_ENDPOINT).strip(),self.pullso.getsockopt(zmq.LAST_ENDPOINT).strip()))
+    self.pair_send((self.pubso.getsockopt_string(zmq.LAST_ENDPOINT).strip(),self.pullso.getsockopt_string(zmq.LAST_ENDPOINT).strip()))
     self.pair.recv_pyobj()
     
     # create the standalone master to query the server
     code = open(osp.realpath(osp.join(osp.dirname(__file__),"__pinc_template.py"))).read()
-    code = code.format(pythonpath=sys.executable,subaddress=self.pubso.getsockopt(zmq.LAST_ENDPOINT).strip(),pushaddress=self.pullso.getsockopt(zmq.LAST_ENDPOINT).strip(),timeout=self.options["child_loop_timeout"],syspath=sys.path)
+    code = code.format(pythonpath=sys.executable,subaddress=self.pubso.getsockopt_string(zmq.LAST_ENDPOINT).strip(),pushaddress=self.pullso.getsockopt_string(zmq.LAST_ENDPOINT).strip(),timeout=self.options["child_loop_timeout"],syspath=sys.path)
     print(code,file=tools.open_in_dir(self.options,"pinc","w",True))
     self.log("create pinc tool at %s"%osp.join(self.options["dirpath"],"pinc"))
 
@@ -517,7 +519,7 @@ class server_exec:
 
   def new_child(self,jbi):
     depend = [self.child[tlabel] for tlabel in jbi.get_dependency()]
-    ch = chld(self.pubso.getsockopt(zmq.LAST_ENDPOINT),self.pullso.getsockopt(zmq.LAST_ENDPOINT),jbi,depend,self.actionqueue,self.log)
+    ch = chld(self.pubso.getsockopt_string(zmq.LAST_ENDPOINT),self.pullso.getsockopt_string(zmq.LAST_ENDPOINT),jbi,depend,self.actionqueue,self.log)
     self.child[ch.label] = ch
     txt = "add child '%s'"%(jbi.get_label())
     if jbi.get_dependency():

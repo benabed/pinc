@@ -2,6 +2,13 @@ import re
 import numpy as nm
 import os.path as osp
 
+try:
+  from astropy.io import fits as pf  
+except ImportError as e:
+  # try pyfits then
+  import pyfits as pf
+
+
 def scarray(li,scal=False):
   if len(li)==1 and scal:
     return li[0]
@@ -14,11 +21,9 @@ def read_array(fname,dirname):
   fname = lookupfile(fname,dirname)
   
   try:
-    import pyfits as pf
-
     pfits = pf.open(fname)
     ii=0
-    while pfits[ii].data == None:
+    while pfits[ii].data is None:
       ii+=1
     return pfits[ii].data
   except Exception:
@@ -42,8 +47,8 @@ class transformme:
       try:
         vl = self.pf.pf[val]
         self.pf._access_list += [val]
-      except Exception,e:
-        if self.df==None:
+      except Exception as e:
+        if self.df is None:
           raise e
         else:
           vl = self.df
@@ -65,7 +70,7 @@ class transformme:
     return self
 
 def getnextline(txtit):
-  l = txtit.next()
+  l = next(txtit)
   l = re.split("#|!",l)[0]
   if len(l.strip())==0:
     return getnextline(txtit)
@@ -150,7 +155,7 @@ class miniparse(object):
     self.localdir = [osp.dirname(osp.abspath(pfn or "."))]
 
     if pfn!=None:
-      print "read parameter file %s"%pfn
+      print("read parameter file %s"%pfn)
       self._parse(open(pfn))  
       #pff =open(pfn)
       #txt = "\n".join([to.split("#")[0] for to in pff])+"\n"
@@ -162,13 +167,13 @@ class miniparse(object):
     self._access_list = []
 
   def keys(self,prefix=""):
-    return [k for k in self.pf.keys() if k[:len(prefix)]==prefix]
+    return [k for k in list(self.pf.keys()) if k[:len(prefix)]==prefix]
     
   def __repr__(self):
     rr = []
-    print self._access_list
+    print(self._access_list)
     for v in self._access_list:
-      print v #ICICICICI
+      print(v) #ICICICICI
       rr += ["%s = %s"%(v,getattr(self,v))]
     return "\n".join(rr)
     
@@ -180,11 +185,11 @@ class miniparse(object):
 
   @property
   def bool(self):
-    return transformme(lambda val:str(val).lower() in ("t","1","true","yes","y"),self)
+    return transformme(lambda val:str(val).lower() in ("t","1","true"),self)
 
   @property
   def bool_array(self):
-    return transformme(lambda val:str(val).lower() in ("t","1","true","yes","y"),self,True)
+    return transformme(lambda val:str(val).lower() in ("t","1","true"),self,True)
     
   @property
   def int(self):
@@ -219,7 +224,7 @@ def fromargv():
   argv = sys.argv
 
   if len(argv)!=2:
-    print "usage: %s parfile\n"%(argv[0])
+    print("usage: %s parfile\n"%(argv[0]))
     sys.exit(-1)
 
   pfn = argv[1]

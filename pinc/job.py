@@ -3,12 +3,12 @@
 #   - python function 
 #   - arbitrary executable
 from __future__ import print_function
-import server
-from tools import get_uniq, minitee,mkdir_safe
+from . import server
+from .tools import get_uniq, minitee,mkdir_safe
 import subprocess as sbp
 import shlex
 import time 
-import pinc_defaults
+from . import pinc_defaults
 import os.path as osp
 import os
 import re
@@ -194,7 +194,7 @@ class fakeqsubjob(job):
 
   def submit(self,runnercmd):
     self.make_exec(self.submit_file,"echo 1")
-    submitid = sbp.check_output([self.submit_file,runnercmd],shell=True)
+    submitid = sbp.check_output([self.submit_file,runnercmd],shell=True).decode("utf-8")
     return None,submitid
 
   def release(self,runnercmd,submitid):
@@ -207,7 +207,7 @@ class fakeqsubjob(job):
 
   def kill(self,submitid):
     self.make_exec(kill_file,"sleep 1")
-    sbp.check_output([self.killscript,self.submitid,self.runnercmd],shell=True)
+    sbp.check_output([self.killscript,self.submitid,self.runnercmd],shell=True).decode("utf-8")
 
 _python_cmd = """
 import dill as cpic
@@ -281,18 +281,20 @@ class qsub(job):
     for l in self.kargs["qsub_after"]:
       txt+=l+"\n"
     self.make_exec(batch_file,txt)
-    submitid = sbp.check_output(["qsub","-h",batch_file])
+    submitid = sbp.check_output(["qsub","-h",batch_file]).decode("utf-8")
+    print(type(submitid),"LALALA")
+    print(submitid)
     submitid = submitid.split(".")[0]
     self.incdb("qsubid",submitid)
     self.logdb(submitid)
     return None,submitid 
 
   def release(self,runnercmd,submitid):
-    sbp.check_output(["qrls",submitid])
+    sbp.check_output(["qrls",submitid]).decode("utf-8")
     return None,submitid
 
   def kill(self,submitid):
-    sbp.check_output(["qdel",submitid])
+    sbp.check_output(["qdel",submitid]).decode("utf-8")
 
 _python_rcmd = """
 import sys

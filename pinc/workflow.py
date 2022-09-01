@@ -1,6 +1,8 @@
 # define here a class that handles the environment on the pipeline
 from __future__ import print_function
-import server
+from .tools import get_uniq, minitee, first_exists,mkdir_safe
+
+from . import server
 import os.path as osp
 import os
 import re
@@ -12,9 +14,9 @@ import subprocess as sbp
 import shlex
 import time 
 import datetime
-import pinc_defaults
-from tools import get_uniq, minitee, first_exists,mkdir_safe
-import job
+from . import pinc_defaults
+from .tools import get_uniq, minitee, first_exists,mkdir_safe
+from . import job
 import atexit
 import signal
 import zmq
@@ -42,7 +44,7 @@ class workflow(object):
     self.label = osp.basename(self.dirpath)
     mkdir_safe(self.dirpath)
     mkdir_safe(osp.join(self.dirpath,self.options["tmpdirname"]))
-    self.logfi = file(osp.join(self.dirpath,self.label+self.options["logsuffix"]),"w")
+    self.logfi = open(osp.join(self.dirpath,self.label+self.options["logsuffix"]),"w")
     self.stdout = sys.stdout
     self.stderr = sys.stderr
     sys.stdout = minitee(self.logfi,sys.stdout)
@@ -99,7 +101,7 @@ class workflow(object):
     for job in self.jobfromany(*labelorjobs):
       try:
         msg = job.register(self.server)
-      except server.pincError,e:
+      except server.pincError as e:
         self.failure(e)
 
       print("submit job %s"%msg,end="")
@@ -163,7 +165,7 @@ class workflow(object):
     print("wait on status %s for %s jobs in %s"%(status,typ,labs,),end="")
     try:
       msg =  self.server.wait(typ,status,*labs)
-    except server.pincError,e:
+    except server.pincError as e:
       self.failure(e)
     print (" : %s"%msg)
     #self.job_status(*labs)
@@ -174,7 +176,7 @@ class workflow(object):
     labs = self.alllabs(*labels)
     try:
       msg =  self.server.get_status(*labels)
-    except server.pincError,e:
+    except server.pincError as e:
       self.failure(e)
 
     #print("MSG:::",msg)
@@ -200,7 +202,7 @@ class workflow(object):
     #self.wait_all(*[jb for jb in self.jobs.keys() if self.jobs[jb].last_status not in "ESKF"])
     try:
       self.server.end_server()
-    except server.pincError,e:
+    except server.pincError as e:
       self.failure(e)
     self.closing_remarks()
 
@@ -210,7 +212,7 @@ class workflow(object):
       print("send kill all to server")
       try:
         self.server.kill_server()
-      except server.pincError,e:
+      except server.pincError as e:
         pass
       self.closing_remarks()
       os._exit(-1)
