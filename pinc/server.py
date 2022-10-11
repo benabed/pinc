@@ -80,7 +80,7 @@ class chld(client):
     self.logfile = jbi.get_logfile()
     self.actionqueue = queue
     self.log = log
-    print(type(pubaddress), "ICICICICICCI")
+    
     self.runnercmd = " ".join([sys.executable,runner.__file__,self.label,pubaddress,pulladdress,self.logfile,"runner"])
 
     self.set_status("0")
@@ -383,7 +383,7 @@ class server_exec:
     self.log("event loop closed")
     self.save_status()
     
-    for k in self.dep:
+    for k in list(self.dep.keys()).copy():
       self.dep[k] = ["master_end" if v==self.current_master_name else v for v in self.dep[k]]
       if k==self.current_master_name:
         self.dep["master_end"] = self.dep[k]
@@ -398,6 +398,7 @@ class server_exec:
 
   def loop(self):
     while(self.keep_running()):
+
       
       # do all the actions
       self.actionqueue.loop()
@@ -405,7 +406,7 @@ class server_exec:
       # poll the pull/push socket for new message
       # wait for one sec
       evs = self.poller.poll(self.options["server_loop_timeout"]*1000)
-
+      
       for ev in evs:
         # we have at least one pending message
         msg = ev[0].recv_pyobj()
@@ -429,7 +430,7 @@ class server_exec:
           # particular case, a new master is registering
           nmaitre = master(self,msg[0],self.actionqueue,self.log)
           self.master[nmaitre.label] = nmaitre
-
+      
       for ch in self.child.keys():
         # test the heartbeat of all the monitored children
         self.child[ch].ping()

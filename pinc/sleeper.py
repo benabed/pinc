@@ -13,7 +13,7 @@ if len(sys.argv)>2:
   print ("got a parfile ! %s"%sys.argv[2])
   pf = open(sys.argv[2])
   for l in pf:
-    print l
+    print (l)
 print ("finished !")
 if int(sys.argv[1])<0:
   sys.exit(int(sys.argv[1]))

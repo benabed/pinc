@@ -8,7 +8,7 @@ import subprocess as sbp
 import shlex
 import time,datetime
 import sys
-from .tools import logger
+from pinc.tools import logger
 
 def noprint(*args,**kargs):
   return
@@ -32,7 +32,7 @@ class runner:
   def connect(self):
     self.ctx=zmq.Context()
     self.subso = self.ctx.socket(zmq.SUB)
-    self.subso.setsockopt(zmq.SUBSCRIBE,"")
+    self.subso.setsockopt_string(zmq.SUBSCRIBE,"")
     self.pushso = self.ctx.socket(zmq.PUSH)
 
     self.logger("connecting on %s|%s : "%(self.pubaddress,self.pulladdress))
@@ -52,7 +52,7 @@ class runner:
     self.rchild = sbp.Popen(self.cmd[i],stdout=self.logger.files[0],stderr=sbp.STDOUT)
 
   def loop(self):
-    self.alive = 10
+    self.alive = 100
     tms = time.time()
     while(self.alive>0):
       self.alive -=1

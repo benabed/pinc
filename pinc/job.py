@@ -108,6 +108,7 @@ class job:
       "kill":"",
       "extra":{}
     }
+    self.kargs.update(pinc_defaults.job_defaults)
     self.kargs.update(kargs)
     self.last_status = ""
     self.sbm = False
@@ -282,8 +283,8 @@ class qsub(job):
       txt+=l+"\n"
     self.make_exec(batch_file,txt)
     submitid = sbp.check_output(["qsub","-h",batch_file]).decode("utf-8")
-    print(type(submitid),"LALALA")
-    print(submitid)
+    
+    
     submitid = submitid.split(".")[0]
     self.incdb("qsubid",submitid)
     self.logdb(submitid)
@@ -299,24 +300,27 @@ class qsub(job):
 _python_rcmd = """
 import sys
 sys.path = %s+sys.path
-print sys.path
+print(sys.path)
 import marshal
 import types
-print "toto"
-func_code = marshal.loads(%s.decode("base64"))
-args = marshal.loads(%s.decode("base64"))
-kargs = marshal.loads(%s.decode("base64"))
-print "tata"
+print("toto")
+func_code = marshal.loads(%s)#.decode("base64"))
+args = marshal.loads(%s)#.decode("base64"))
+kargs = marshal.loads(%s)#.decode("base64"))
+print("tata")
 func = types.FunctionType(func_code,globals())
 func(*args,**kargs)
-print "toto"
+print ("toto")
 """
 
 def python_cmd(func,args,kargs={},use_sys_path=True):
   import marshal
-  func_s = repr(marshal.dumps(func.func_code).encode("base64"))
-  args_s = repr(marshal.dumps(args).encode("base64"))
-  kargs_s = repr(marshal.dumps(kargs).encode("base64"))
+  #func_s = repr(marshal.dumps(func.__code__).encode("base64"))
+  #args_s = repr(marshal.dumps(args).encode("base64"))
+  #kargs_s = repr(marshal.dumps(kargs).encode("base64"))
+  func_s = repr(marshal.dumps(func.__code__))#.encode("base64"))
+  args_s = repr(marshal.dumps(args))#.encode("base64"))
+  kargs_s = repr(marshal.dumps(kargs))#.encode("base64"))
   spath = []
   if use_sys_path:
     import sys

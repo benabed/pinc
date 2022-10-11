@@ -56,6 +56,9 @@ class workflow(object):
     print("start workflow %s (in %s)"%(self.label,self.dirpath))
     print("time is %s"%datetime.datetime.today().isoformat())
 
+  def set_job_defaults(self,**kargs):
+    pinc_defaults.job_defaults.update(kargs)
+    
   def jobfromany(self,*lbs):
     res = []
     for lb in lbs:

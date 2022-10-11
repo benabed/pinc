@@ -18,3 +18,5 @@ defaults = {
   "dep_log"             : "status.dot",
   "dep_log_delay"       : 30,
 }
+
+job_defaults = {}
