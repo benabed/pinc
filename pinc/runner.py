@@ -22,7 +22,7 @@ class runner:
     self.logger("------------ Starting %s ----------------"%(self.label))
     self.options={"child_loop_timeout":6,"child_ping_delay":.5}
     import os
-    self.logger("host : %s"%os.environ["HOSTNAME"])
+    self.logger("host : %s"%os.environ.get("HOSTNAME","NOHOST"))
     self.rchild = None
     # connect to the server
     self.connect()
