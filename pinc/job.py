@@ -187,7 +187,7 @@ class job:
     return
 
 class barrier(job):
-  def __init__(self,wrk,**karg):
+  def __init__(self,wrk,**kargs):
     job.__init__(self,wrk,**kargs)
     self.kargs["cmd"] = "sleep 0"
 

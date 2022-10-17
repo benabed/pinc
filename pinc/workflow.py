@@ -121,8 +121,8 @@ class workflow(object):
     else:
       label = "barrier"
     kargs["label"]=label
-    kargs["jobclass"]="barrier"
-    return job(kargs)
+    kargs["jobclass"]=job.barrier
+    return self.job(**kargs)
         
   def failure(self,e):
     text = e.text
