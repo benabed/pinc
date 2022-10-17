@@ -186,6 +186,11 @@ class job:
   def kill(self,submitid):
     return
 
+class barrier(job):
+  def __init__(self,wrk,**karg):
+    job.__init__(self,wrk,**kargs)
+    self.kargs["cmd"] = "sleep 0"
+
 class fakeqsubjob(job):
   
   def __init__(self,wrk,**kargs):

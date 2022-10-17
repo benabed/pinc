@@ -115,6 +115,15 @@ class workflow(object):
       msgs += msg+"\n"
     return msgs.strip()
     
+  def barrier(self,**kargs):
+    if "label" in kargs:
+      label = kargs["label"]
+    else:
+      label = "barrier"
+    kargs["label"]=label
+    kargs["jobclass"]="barrier"
+    return job(kargs)
+        
   def failure(self,e):
     text = e.text
     cause = str(e.cause if e.cause else "")
