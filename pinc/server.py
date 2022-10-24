@@ -169,7 +169,44 @@ class chld(client):
     self.timestamp()
     self.set_status("L")
     
+class brrr(chld):
+  def __init__(self,pubaddress,pulladdress,jbi,depend,queue,log):
+    client.__init__(self,jbi.get_label(),queue,log)
+    self.options = jbi.kargs["options"].copy()
+    #self.cmd = jbi.get_cmd()
+    self.rchild = None
+    self.status_db = [""]*8
+    self.triggers = tools.bag()
+    self.logfile = jbi.get_logfile()
+    self.actionqueue = queue
+    self.log = log
+    
+    #self.runnercmd = " ".join([sys.executable,runner.__file__,self.label,pubaddress,pulladdress,self.logfile,"runner"])
+    self.runnercmd=""
+    self.set_status("0")
+    
+    self.deal_with_jbi(jbi,depend)
+
+  def run(self,no=None):
+    self.timestamp()
+    self.set_status("L")
+    self.set_status("P")
+    self.set_status("R")
+
+  def kill(self,ifneeded=True):
+      self.set_status("K")
+      return    
   
+  def ping(self):
+      return
+
+  def cleanup(self):
+    self.finalize()
+
+  def lower(self):
+    self.set_status("S")
+    self.cleanup()
+
 class master(client):
   def __init__(self,serv,label,queue,log):
     client.__init__(self,label,queue,log)
@@ -183,7 +220,7 @@ class master(client):
     self.register_response("add job",self.add_job_response)
     
   def disconnect_response(self,msg):
-    self.act(msg="disconect",callback=lambda :self.serv.master.pop(self.label))
+    self.act(msg="disconnect",callback=lambda :self.serv.master.pop(self.label))
 
   def status_response(self,msg):
     status = self.serv.get_status(*msg[2:])
@@ -213,7 +250,10 @@ class master(client):
     ch = self.serv.new_child(jbi)
     self.act(msg=("add job",ch.label))
 
-
+  def lower_response(self,msg):
+    labels=msg[1:]
+    lbs = self.serv.lower(*labels)
+    self.act(msg=("lower",lbs))
 
 class ertiam:
   def __init__(self,subaddress,pushaddress,timeout,ctx=None):
@@ -237,7 +277,7 @@ class ertiam:
     alive = self.alive
     while(alive>0):
       alive -=1
-      ev = self.subso.poll(self.timeout*1000)
+      ev = self.subso.poll(self.timeout*100)
       if ev:
         rsg = self.subso.recv_pyobj()
         alive += 1
@@ -281,19 +321,20 @@ class ertiam:
     msg = self.communicate("add job",jbi)
     return msg[2]
 
+  def lower_barrier(self,*labels):
+    msg = self.communicate("lower",*labels)
+    return msg 
+
   def __del__(self):
     try:
-      #print("1")
       self.timeout=1
-      #print("2")
       self.communicate("disconnect")
-      #print("3")
     except Exception as e:
-      #print("4")
       pass
-    #print("5")
-    self.ctx.destroy(2000)
-    #print("6")
+    self.subso.close()
+    self.pushso.close()
+
+    self.ctx.destroy()
     
 class server(ertiam):
   def __init__(self,options):
@@ -390,6 +431,10 @@ class server_exec:
         del(self.dep[k])
     self.save_dep()
 
+    # close all sockets 
+    self.pullso.close()
+    self.pubso.close()
+
     self.context.destroy()
     self.log("ending")    
     print("%s"%datetime.datetime.today().isoformat(),file=tools.open_in_dir(self.options,"end_server","w"))
@@ -405,7 +450,7 @@ class server_exec:
       
       # poll the pull/push socket for new message
       # wait for one sec
-      evs = self.poller.poll(self.options["server_loop_timeout"]*1000)
+      evs = self.poller.poll(self.options["server_loop_timeout"]*100)
       
       for ev in evs:
         # we have at least one pending message
@@ -518,9 +563,20 @@ class server_exec:
     print_job_status(self.get_status(),file=tools.open_in_dir(self.options,self.options["status_log"],"w"))
     self.log("save child status at %s"%osp.join(self.options["dirpath"],self.options["status_log"]))
 
+  def lower(self,*labels):
+    llb = []
+    for lab in labels:
+      if lab in self.child and isinstance(self.child[lab],brrr):
+        self.child[lab].lower()
+        llb += [lab]
+    return llb
+
   def new_child(self,jbi):
     depend = [self.child[tlabel] for tlabel in jbi.get_dependency()]
-    ch = chld(self.pubso.getsockopt_string(zmq.LAST_ENDPOINT),self.pullso.getsockopt_string(zmq.LAST_ENDPOINT),jbi,depend,self.actionqueue,self.log)
+    if getattr(jbi,"is_barrier",lambda : False)():
+      ch = brrr(self.pubso.getsockopt_string(zmq.LAST_ENDPOINT),self.pullso.getsockopt_string(zmq.LAST_ENDPOINT),jbi,depend,self.actionqueue,self.log)
+    else:  
+      ch = chld(self.pubso.getsockopt_string(zmq.LAST_ENDPOINT),self.pullso.getsockopt_string(zmq.LAST_ENDPOINT),jbi,depend,self.actionqueue,self.log)
     self.child[ch.label] = ch
     txt = "add child '%s'"%(jbi.get_label())
     if jbi.get_dependency():

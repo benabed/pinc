@@ -8,7 +8,7 @@ defaults = {
   "server_loop_timeout" : 1.,           # in sec
   "child_protocol"      : "tcp",
   "child_address"       : "*:*",
-  "child_ping_timeout"  : 600.,         # in sec
+  "child_ping_timeout"  : 60.,         # in sec
   "child_ping_delay"    : 50.,          # in sec
   "child_loop_timeout"  : 2.,           # in sec
   "server_log"          : "server.log",

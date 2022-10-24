@@ -115,15 +115,25 @@ class workflow(object):
       msgs += msg+"\n"
     return msgs.strip()
     
-  def barrier(self,**kargs):
+  def raise_barrier(self,**kargs):
     if "label" in kargs:
       label = kargs["label"]
     else:
       label = "barrier"
     kargs["label"]=label
     kargs["jobclass"]=job.barrier
+    kargs["run"]=True
     return self.job(**kargs)
-        
+  
+  def lower_barrier(self,*labels):
+    assert self._start,"workflow stopped"
+    labs = self.alllabs(*labels)
+    try:
+      msg =  self.server.lower_barrier(*labs)
+    except server.pincError as e:
+      self.failure(e)
+    print (" : %s"%(msg,))
+     
   def failure(self,e):
     text = e.text
     cause = str(e.cause if e.cause else "")

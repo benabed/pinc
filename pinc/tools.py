@@ -40,7 +40,10 @@ class minitee:
     self.fi2.write(txt)
     self.fi1.flush()
     self.fi2.flush()
-
+  def flush(self):
+    self.fi1.flush()
+    self.fi2.flush()
+    
 ##class miniq:
 ##  def __init__(self,li=[]):
 ##    self.li = []

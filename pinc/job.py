@@ -190,6 +190,8 @@ class barrier(job):
   def __init__(self,wrk,**kargs):
     job.__init__(self,wrk,**kargs)
     self.kargs["cmd"] = "sleep 0"
+  def is_barrier(self):
+    return True
 
 class fakeqsubjob(job):
   
