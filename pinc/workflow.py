@@ -132,7 +132,7 @@ class workflow(object):
       msg =  self.server.lower_barrier(*labs)
     except server.pincError as e:
       self.failure(e)
-    print (" : %s"%(msg,))
+    
      
   def failure(self,e):
     text = e.text
