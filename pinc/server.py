@@ -5,9 +5,9 @@ import zmq
 import sys
 import time,datetime
 import subprocess as sbp
-import pinc.runner as runner
+from . import  runner
 import os.path as osp
-import pinc.tools as tools
+from  . import tools
 import json
 import pinc.action as action
 
