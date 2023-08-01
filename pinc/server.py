@@ -7,6 +7,7 @@ import time,datetime
 import subprocess as sbp
 import os.path as osp
 import pinc.tools as tools
+import pinc.runner as runner
 import json
 import pinc.action as action
 
@@ -70,8 +71,7 @@ class chld(client):
       self.trig()
 
   def __init__(self,pubaddress,pulladdress,jbi,depend,queue,log):
-    from . import  runner
-
+    
     client.__init__(self,jbi.get_label(),queue,log)
     self.options = jbi.kargs["options"].copy()
     self.cmd = jbi.get_cmd()
