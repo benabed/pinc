@@ -118,7 +118,7 @@ class job:
     mkdir_safe(self.get_dirpath())
 
   def add_alias(self,*alias):
-    self.alias.append(alias)
+    self.kargs["alias"].append(alias)
 
   def get_dirpath(self):
     return osp.join(self.kargs["dirpath"],self.kargs["label"])
