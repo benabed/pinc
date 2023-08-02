@@ -575,7 +575,7 @@ class server_exec:
 
   def sanitize_dependency(self,jbi):
     dep = jbi.get_dependency()
-    return [get(self.label_alias,d,d) for d in dep]
+    return [self.label_alias.get(d,d) for d in dep]
 
   def new_child(self,jbi):
     depend = [self.child[tlabel] for tlabel in self.sanitize_dependency(jbi)]
