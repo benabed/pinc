@@ -366,6 +366,7 @@ class server_exec:
     self.context = zmq.Context()
     self.poller = zmq.Poller()
     self.child = {}
+    self.label_alias = {}
     self.master = {}
     self._running = tools.bag()
     self.dep = {}
@@ -572,17 +573,22 @@ class server_exec:
         llb += [lab]
     return llb
 
+  def sanitize_dependency(self,jbi):
+    dep = jbi.get_dependency()
+    return [get(self.label_alias,d,d) for d in dep]
+
   def new_child(self,jbi):
-    depend = [self.child[tlabel] for tlabel in jbi.get_dependency()]
+    depend = [self.child[tlabel] for tlabel in self.sanitize_dependency(jbi)]
     if getattr(jbi,"is_barrier",lambda : False)():
       ch = brrr(self.pubso.getsockopt_string(zmq.LAST_ENDPOINT),self.pullso.getsockopt_string(zmq.LAST_ENDPOINT),jbi,depend,self.actionqueue,self.log)
     else:  
       ch = chld(self.pubso.getsockopt_string(zmq.LAST_ENDPOINT),self.pullso.getsockopt_string(zmq.LAST_ENDPOINT),jbi,depend,self.actionqueue,self.log)
     self.child[ch.label] = ch
+    self.label_alias.update(dict([(al,ch.label) for al in ch.get_alias()]))
     txt = "add child '%s'"%(jbi.get_label())
     if jbi.get_dependency():
-      txt += " after %s"%(",".join(jbi.get_dependency()))
-    self.delay_dep.update(ch.label,jbi.get_dependency())
+      txt += " after %s"%(",".join(sanitize_dependency(jbi)))
+    self.delay_dep.update(ch.label,sanitize_dependency(jbi))
     self.log(txt)
     action.trgr("all","R",[ch],self._inc_running,label="inc")
     action.trgr("all","SKF",[ch],self._dec_running,label="dec")

@@ -80,6 +80,8 @@ class job:
     return self.kargs.get("after",())
   def get_label(self):
     return self.kargs["label"]
+  def get_alias(self):
+    return self.kargs["alias"]
   def get_logfile(self):
     return self.kargs["logfile"]
 
@@ -106,7 +108,8 @@ class job:
       "submit":"",
       "release":"",
       "kill":"",
-      "extra":{}
+      "extra":{},
+      "alias":[]
     }
     self.kargs.update(pinc_defaults.job_defaults)
     self.kargs.update(kargs)
@@ -114,6 +117,8 @@ class job:
     self.sbm = False
     mkdir_safe(self.get_dirpath())
 
+  def add_alias(self,**alias):
+    self.alias.append(alias)
   def get_dirpath(self):
     return osp.join(self.kargs["dirpath"],self.kargs["label"])
   def get_tmp(self):
