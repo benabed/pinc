@@ -584,7 +584,7 @@ class server_exec:
     else:  
       ch = chld(self.pubso.getsockopt_string(zmq.LAST_ENDPOINT),self.pullso.getsockopt_string(zmq.LAST_ENDPOINT),jbi,depend,self.actionqueue,self.log)
     self.child[ch.label] = ch
-    self.label_alias.update(dict([(al,ch.label) for al in ch.get_alias()]))
+    self.label_alias.update(dict([(al,ch.label) for al in jbi.get_alias()]))
     txt = "add child '%s'"%(jbi.get_label())
     if jbi.get_dependency():
       txt += " after %s"%(",".join(sanitize_dependency(jbi)))
