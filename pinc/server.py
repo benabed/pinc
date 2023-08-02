@@ -587,8 +587,8 @@ class server_exec:
     self.label_alias.update(dict([(al,ch.label) for al in jbi.get_alias()]))
     txt = "add child '%s'"%(jbi.get_label())
     if jbi.get_dependency():
-      txt += " after %s"%(",".join(sanitize_dependency(jbi)))
-    self.delay_dep.update(ch.label,sanitize_dependency(jbi))
+      txt += " after %s"%(",".join(self.sanitize_dependency(jbi)))
+    self.delay_dep.update(ch.label,self.sanitize_dependency(jbi))
     self.log(txt)
     action.trgr("all","R",[ch],self._inc_running,label="inc")
     action.trgr("all","SKF",[ch],self._dec_running,label="dec")
