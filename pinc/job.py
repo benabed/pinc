@@ -77,7 +77,10 @@ class job:
     self.wrk = buf
 
   def get_dependency(self):
-    return self.kargs.get("after",())
+    dep = self.kargs.get("after",())
+    if isinstance(dep,str):
+      return (dep,)
+    return dep
   def get_label(self):
     return self.kargs["label"]
   def get_alias(self):
@@ -118,7 +121,7 @@ class job:
     mkdir_safe(self.get_dirpath())
 
   def add_alias(self,*alias):
-    self.kargs["alias"].append(alias)
+    self.kargs["alias"].extend(tuple(alias))
 
   def get_dirpath(self):
     return osp.join(self.kargs["dirpath"],self.kargs["label"])
